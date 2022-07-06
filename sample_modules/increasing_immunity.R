@@ -16,6 +16,7 @@ immunity <- function(dat, at) {
         n <- sum(dat$attr$active == 1)
         # some people are naturally more resistant to this disease
         dat$attr$immunity <- rpois(n, 0.5) + 1
+        print(dat$attr$immunity)
     } else {
         dat$attr$immunity <- dat$attr$immunity
     }
@@ -122,7 +123,7 @@ est <- netest(nw, formation = ~ edges, target.stats = 150,
 ## Epidemic model parameterization
 param <- param.net(si.prob = 0.25, act.rate = 2, is.rate = 0.01)
 init <- init.net(i.num = 10)
-control <- control.net(nsteps = 500, nsims = 5, immunity.FUN = immunity,
+control <- control.net(nsteps = 100, nsims = 5, immunity.FUN = immunity,
                        infection.FUN = si.infection,
                        recovery.FUN = is.recovery, skip.check = TRUE, 
                        resimulate.network = FALSE, verbose.int = 0)

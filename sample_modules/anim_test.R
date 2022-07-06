@@ -163,5 +163,5 @@ layout(1) # reset the layout
 
 
 # render an animation of the network
-render.animation(toy_epi_sim,vertex.col='ndtvcol',displaylabels=FALSE)
+render.animation(toy_epi_sim, tween.frames = 20, vertex.col='ndtvcol',displaylabels=FALSE)
 ani.replay()
