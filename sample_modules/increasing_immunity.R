@@ -8,6 +8,7 @@
 # The modeling of arrivals, departures, and deaths are left for  future work.
 
 library("EpiModel")
+library("ndtv")
 
 # Increasing Immunity Module
 immunity <- function(dat, at) {
@@ -121,7 +122,7 @@ est <- netest(nw, formation = ~ edges, target.stats = 150,
 ## Epidemic model parameterization
 param <- param.net(si.prob = 0.25, act.rate = 2, is.rate = 0.01)
 init <- init.net(i.num = 10)
-control <- control.net(nsteps = 100, nsims = 5, immunity.FUN = immunity,
+control <- control.net(nsteps = 500, nsims = 5, immunity.FUN = immunity,
                        infection.FUN = si.infection,
                        recovery.FUN = is.recovery, skip.check = TRUE, 
                        resimulate.network = FALSE, verbose.int = 0)
@@ -134,4 +135,3 @@ par(mfrow = c(1, 1))
 plot(sim, y = c("s.num", "i.num"),
      mean.col = 1:2, qnts = 1, qnts.col = 1:2, legend = TRUE)
 
-render.d3movie(sim$network$sim1[[1]])
