@@ -252,7 +252,23 @@ layout(1) # reset the layout
 
 
 # render an animation of the network
+
 render.par <- list(tween.frames=20,show.time=TRUE,
                  show.stats=NULL)
-render.animation(ntwk, render.par = render.par, vertex.col='ndtvcol', displaylabels=FALSE)
-ani.replay()
+plot.par <- list(mar = c(0, 0, 0, 0))
+
+# render.animation(ntwk, render.par = render.par, vertex.col='ndtvcol', displaylabels=FALSE)
+# ani.replay()
+
+render.d3movie(
+  ntwk, 
+  render.par = render.par,
+  plot.par = plot.par,
+  vertex.cex = 0.9,
+  vertex.col = "ndtvcol",
+  vertex.border = "lightgrey",
+  displaylabels = FALSE,
+  vertex.tooltip = function(slice){paste('name:',slice%v%'vertex.names','<br>',
+                                         'status:', slice%v%'testatus')},
+  output.mode='htmlWidget')
+
