@@ -6,7 +6,7 @@ read_info <- function() {
   # Read in network states and clean
   states <- readline(prompt = "Enter Network States (separated by comma): ")
   states <- strsplit(states, ",")[[1]]
-  states <- str_tr im(states)
+  states <- str_trim(states)
   
   # Create empty labelled rate vector
   n <- length(states)
