@@ -1,4 +1,5 @@
 # like color tea, but works for more than SIR states
+# currently just up to 6 for "pretty colors"
 
 ecolor_tea <- function(nd, old.var = "testatus", new.var = "ndtvcol", verbose = TRUE) {
   
