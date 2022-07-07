@@ -7,7 +7,7 @@ ecolor_tea <- function(nd, old.var = "testatus", new.var = "ndtvcol", alpha = 0.
   ntwk_states <- find_ntwk_states(nd)
   for (at in times) {
     stat <- get.vertex.attribute.active(nd, old.var, at = at)
-    
+    print(stat)
     # red, green, blue, yellow, pink, gray
     colors <- c(2, 3, 4, 7, 6, 8)
     counter <- 1
@@ -15,6 +15,7 @@ ecolor_tea <- function(nd, old.var = "testatus", new.var = "ndtvcol", alpha = 0.
         temp <- which(stat == state)
         nd <- activate.vertex.attribute(nd, prefix = new.var, value = adjustcolor(colors[counter], alpha),
                                         onset = at, terminus = Inf, v = temp)
+        # nd <- activate.vertex.attribute(nd, prefix = a_immunity, value = )
         counter <- counter + 1
     }
     
