@@ -9,14 +9,19 @@ library("ndtv")
 ### Attribute Modules
 
 immunity <- function(dat, at) {
+  nw <- dat$nw
   if (at == 2) {
     n <- sum(dat$attr$active == 1)
     # some people are naturally more resistant to this disease
-    dat$attr$immunity <- rpois(n, 0.5) + 1
+    imm_val <- rpois(n, 0.5) + 1
+    dat$attr$immunity <- imm_val
+    nw[[1]]%v%'immunity' <- imm_val
   } else {
     # immunity falls off over time, with the immunity gained from a successful
     # recovery disappearing over 50 time steps
-    dat$attr$immunity <- ifelse(dat$attr$immunity > 1, dat$attr$immunity - 0.04, dat$attr$immunity)
+    imm_val <- ifelse(dat$attr$immunity > 1, dat$attr$immunity - 0.04, dat$attr$immunity)
+    dat$attr$immunity <- imm_val
+    nw[[1]]%v%"immunity" <- imm_val
   }
   
   if (at == 2) {
@@ -24,6 +29,7 @@ immunity <- function(dat, at) {
   } else {
     dat$epi$meanImmunity[at] <- mean(dat$attr$immunity, na.rm = TRUE)
   }
+  dat$nw <- nw
   return(dat)
 }
 
@@ -120,6 +126,7 @@ infect_ese <- function(dat, at) {
 ### Progression Modules
 
 progress <- function(dat, at) {
+  nw <- dat$nw
   
   active <- dat$attr$active
   status <- dat$attr$status
@@ -168,7 +175,9 @@ progress <- function(dat, at) {
       idsSus <- idsEligSus[vecSus]
       nSus <- length(idsSus)
       status[idsSus] <- "s"
-      immunity[idsSus] <- immunity[idsSus] + 2
+      imm_val <- immunity[idsSus] + 2
+      immunity[idsSus] <- imm_val
+      nw[[1]]%v%"immunity" <- imm_val
     }
   }
   
@@ -196,6 +205,8 @@ progress <- function(dat, at) {
     dat$epi$i.num[at] <- sum(active == 1 & status == "i")
     dat$epi$r.num[at] <- sum(active == 1 & status == "r")
   }
+  
+  dat$nw <- nw
   
   return(dat)
 }
@@ -230,24 +241,25 @@ plot(sim, y = c("s.num", "e.num", "i.num", "r.num"),
 ### Animations
 ntwk <- get_network(sim)
 ntwk <- ecolor_tea(ntwk)
+ntwk_light <- ecolor_tea(ntwk, alpha = 0.35)
 
 timeline(ntwk)
 
 # set up layout to draw plots under timeline
 layout(matrix(c(1,1,1,2,3,4),nrow=2,ncol=3,byrow=TRUE))
 # plot a proximity.timeline illustrating infection spread
-proximity.timeline(ntwk, vertex.col = 'ndtvcol',
+proximity.timeline(ntwk_light, vertex.col = 'ndtvcol',
                    spline.style='color.attribute',
-                   mode = 'sammon',default.dist=100,
+                   mode = 'sammon',default.dist=10,
                    chain.direction='reverse')
 # plot 3 static cross-sectional networks 
 # (beginning, middle and end) underneath for comparison
 plot(network.collapse(ntwk,at=1),vertex.col='ndtvcol',
-     main='simulated network at t=1')
+     main='simulated network at t=1', vertex.cex = 1.5, edge.lwd = 2)
 plot(network.collapse(ntwk,at=100),vertex.col='ndtvcol',
-     main='simulated network at=100')
+     main='simulated network at=100', vertex.cex = 1.5, edge.lwd = 2)
 plot(network.collapse(ntwk,at=200),vertex.col='ndtvcol',
-     main='simulated network at t=200')
+     main='simulated network at t=200', vertex.cex = 1.5, edge.lwd = 2)
 layout(1) # reset the layout
 
 
@@ -260,8 +272,15 @@ plot.par <- list(mar = c(0, 0, 0, 0))
 # render.animation(ntwk, render.par = render.par, vertex.col='ndtvcol', displaylabels=FALSE)
 # ani.replay()
 
+compute.animation(ntwk,animation.mode = 'MDSJ', chain.direction='reverse',verbose=FALSE)
+
+
 render.d3movie(
-  ntwk, 
+  ntwk,
+  vertex.tooltip = paste("<strong>", ntwk%v%'vertex.names', "</strong><br>",
+                         "Status: ", ntwk%v%'status', "<br>",
+                         "Immunity: ", ntwk%v%'immunity', "<br>"),
+  d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
   render.par = render.par,
   plot.par = plot.par,
   vertex.cex = 0.9,
@@ -269,6 +288,5 @@ render.d3movie(
   vertex.border = "lightgrey",
   displaylabels = FALSE,
   vertex.tooltip = function(slice){paste('name:',slice%v%'vertex.names','<br>',
-                                         'status:', slice%v%'testatus')},
-  output.mode='htmlWidget')
+                                         'status:', slice%v%'testatus')})
 
