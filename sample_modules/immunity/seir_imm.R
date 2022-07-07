@@ -241,7 +241,7 @@ plot(sim, y = c("s.num", "e.num", "i.num", "r.num"),
 ### Animations
 ntwk <- get_network(sim)
 ntwk <- ecolor_tea(ntwk)
-ntwk_light <- ecolor_tea(ntwk, alpha = 0.35)
+ntwk_light <- ecolor_tea(ntwk, alpha = 0.15)
 
 timeline(ntwk)
 
