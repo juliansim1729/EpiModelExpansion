@@ -1,7 +1,7 @@
 # like color tea, but works for more than SIR states
 # currently just up to 6 for "pretty colors"
 
-ecolor_tea <- function(nd, old.var = "testatus", new.var = "ndtvcol", verbose = TRUE) {
+ecolor_tea <- function(nd, old.var = "testatus", new.var = "ndtvcol", alpha = 0.75, verbose = TRUE) {
   
   times <- 1:max(get.change.times(nd))
   ntwk_states <- find_ntwk_states(nd)
@@ -13,7 +13,7 @@ ecolor_tea <- function(nd, old.var = "testatus", new.var = "ndtvcol", verbose = 
     counter <- 1
     for (state in ntwk_states) {
         temp <- which(stat == state)
-        nd <- activate.vertex.attribute(nd, prefix = new.var, value = adjustcolor(colors[counter], 0.75),
+        nd <- activate.vertex.attribute(nd, prefix = new.var, value = adjustcolor(colors[counter], alpha),
                                         onset = at, terminus = Inf, v = temp)
         counter <- counter + 1
     }
