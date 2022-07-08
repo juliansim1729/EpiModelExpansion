@@ -49,7 +49,7 @@ infect_ise <- function(dat, at) {
   
   if (nElig > 0 && nElig < nActive) {
     del <- discord_edgelist(dat, at)
-    del <- attr_edgelist(dat, at, del, susattr = "immunity")
+    del <- n_attr_edgelist(dat, at, del, susattr = "immunity")
     
     if (!(is.null(del))) {
       
@@ -241,7 +241,7 @@ plot(sim, y = c("s.num", "e.num", "i.num", "r.num"),
 ### Animations
 ntwk <- get_network(sim)
 ntwk <- ecolor_tea(ntwk)
-ntwk_light <- ecolor_tea(ntwk, alpha = 0.15)
+ntwk_light <- e_color_tea(ntwk, alpha = 0.15)
 
 timeline(ntwk)
 

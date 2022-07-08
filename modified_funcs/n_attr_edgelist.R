@@ -1,5 +1,5 @@
 
-attr_edgelist <- function(dat, at, del, susattr = NULL, infattr = NULL) {
+n_attr_edgelist <- function(dat, at, del, susattr = NULL, infattr = NULL) {
     
     # process susceptible attributes
     if (!is.null(susattr) & !is.null(del)) {
