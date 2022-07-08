@@ -1,3 +1,9 @@
+# https://github.com/EpiModel/EpiModel/blob/ebac1efd8d3e6555ff685c139754b9f3ec5ac71d/R/net.mod.init.R
+# ISSUES: 
+# can only initialize infected amounts
+# groups can only operate within 2
+# status is only tracked object
+
 init_status2.net <- function(dat) {
   
   type <- get_control(dat, "type", override.null.error = TRUE)
