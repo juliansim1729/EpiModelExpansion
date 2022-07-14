@@ -12,14 +12,16 @@ immunity <- function(dat, at) {
   nw <- dat$nw
   if (at == 2) {
     n <- sum(dat$attr$active == 1)
-    # some people are naturally more resistant to this disease
+    
     imm_val <- rpois(n, 0.5) + 1
     dat$attr$immunity <- imm_val
     nw[[1]]%v%'immunity' <- imm_val
+    
   } else {
     # immunity falls off over time, with the immunity gained from a successful
     # recovery disappearing over 50 time steps
-    imm_val <- ifelse(dat$attr$immunity > 1, dat$attr$immunity - 0.04, dat$attr$immunity)
+    imm_val <- ifelse(dat$attr$immunity > 1, dat$attr$immunity - 
+                          dat$param$imm.decay, dat$attr$immunity)
     dat$attr$immunity <- imm_val
     nw[[1]]%v%"immunity" <- imm_val
   }
@@ -215,13 +217,13 @@ progress <- function(dat, at) {
 
 # Initialize the network and estimate the ERGM
 nw <- network::network.initialize(100, directed = FALSE)
-est <- netest(nw, formation = ~ edges, target.stats = 30,
+est <- netest(nw, formation = ~ edges, target.stats = 50,
               coef.diss = dissolution_coefs(~ offset(edges), 10))
 
 # Epidemic model parameterization
 param <- param.net(ise.prob = 0.5, ese.prob = 0.5,
                    ei.rate = 0.075, ir.rate = 0.05, rs.rate = 0.1,
-                   act.rate = 2)
+                   act.rate = 1, imm.decay = 0.04)
 init <- init.net(i.num = 10)
 control <- control.net(nsteps = 200, nsims = 5, immunity.FUN = immunity,
                        infection.FUN = NULL, infection_ise.FUN = infect_ise,
@@ -252,7 +254,7 @@ proximity.timeline(ntwk_light, vertex.col = 'ndtvcol',
                    spline.style='color.attribute',
                    mode = 'sammon',default.dist=10,
                    chain.direction='reverse')
-# plot 3 static cross-sectional networks 
+#plot 3 static cross-sectional networks 
 # (beginning, middle and end) underneath for comparison
 plot(network.collapse(ntwk,at=1),vertex.col='ndtvcol',
      main='simulated network at t=1', vertex.cex = 1.5, edge.lwd = 2)
@@ -265,28 +267,25 @@ layout(1) # reset the layout
 
 # render an animation of the network
 
-render.par <- list(tween.frames=20,show.time=TRUE,
+render.par <- list(tween.frames=10,show.time=TRUE,
                  show.stats=NULL)
 plot.par <- list(mar = c(0, 0, 0, 0))
 
 # render.animation(ntwk, render.par = render.par, vertex.col='ndtvcol', displaylabels=FALSE)
 # ani.replay()
 
-compute.animation(ntwk,animation.mode = 'MDSJ', chain.direction='reverse',verbose=FALSE)
-
+compute.animation(ntwk,animation.mode = 'MDSJ', chain.direction = 'reverse', verbose=FALSE)
 
 render.d3movie(
   ntwk,
-  vertex.tooltip = paste("<strong>", ntwk%v%'vertex.names', "</strong><br>",
-                         "Status: ", ntwk%v%'status', "<br>",
-                         "Immunity: ", ntwk%v%'immunity', "<br>"),
+  vertex.tooltip = function(slice){paste('name:',slice%v%'vertex.names','<br>',
+                                         'status:', slice%v%'testatus', '<br>',
+                                         'immunity:', slice%v%'teimmunity')},
   d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
   render.par = render.par,
   plot.par = plot.par,
   vertex.cex = 0.9,
   vertex.col = "ndtvcol",
   vertex.border = "lightgrey",
-  displaylabels = FALSE,
-  vertex.tooltip = function(slice){paste('name:',slice%v%'vertex.names','<br>',
-                                         'status:', slice%v%'testatus')})
+  displaylabels = FALSE)
 
