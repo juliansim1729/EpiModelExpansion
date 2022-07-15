@@ -1,6 +1,8 @@
 # Susceptible > Exposed > Infected > Recovered > Susceptible
 # SEIR + Immunity
 
+# when are S, E, I, R updated within testatus.active
+
 ### Library Calls
 
 library("EpiModel")
@@ -16,7 +18,6 @@ immunity <- function(dat, at) {
     imm_val <- rpois(n, 0.5) + 1
     dat$attr$immunity <- imm_val
     nw[[1]]%v%'immunity' <- imm_val
-    
   } else {
     # immunity falls off over time, with the immunity gained from a successful
     # recovery disappearing over 50 time steps
@@ -225,7 +226,8 @@ param <- param.net(ise.prob = 0.5, ese.prob = 0.5,
                    ei.rate = 0.075, ir.rate = 0.05, rs.rate = 0.1,
                    act.rate = 1, imm.decay = 0.04)
 init <- init.net(i.num = 10)
-control <- control.net(nsteps = 200, nsims = 5, immunity.FUN = immunity,
+control <- control.net(nsteps = 50, nsims = 5, initialize.FUN = e_initialize.net, 
+                       immunity.FUN = immunity,
                        infection.FUN = NULL, infection_ise.FUN = infect_ise,
                        infection_ese.FUN = infect_ese,
                        recovery.FUN = NULL, progress.FUN = progress,

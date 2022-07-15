@@ -1,5 +1,4 @@
-initialize.net <- function(x, param, init, control, s) {
-    
+e_initialize.net <- function(x, param, init, control, s) {
     if (control$start == 1) {
         
         # Main Data List --------------------------------------------------------
@@ -75,7 +74,6 @@ initialize.net <- function(x, param, init, control, s) {
 
 
 init_status.net <- function(dat) {
-  
   type <- get_control(dat, "type", override.null.error = TRUE)
   type <- if (is.null(type)) "None" else type
   
@@ -198,6 +196,7 @@ init_status.net <- function(dat) {
       }
     }
     
+    print(infTime)
     dat <- set_attr(dat, "infTime", infTime)
   }
   
@@ -205,47 +204,46 @@ init_status.net <- function(dat) {
 }
 
 init_immunity.net <- function(dat) {
-    
-    type <- get_control(dat, "type", override.null.error = TRUE)
-    type <- if (is.null(type)) "None" else type
-    
-    nsteps <- get_control(dat, "nsteps")
-    tergmLite <- get_control(dat, "tergmLite")
-    vital <- get_param(dat, "vital")
-    groups <- get_param(dat, "groups")
-    immunity.vector <- get_init(dat, "immunity.vector", override.null.error = TRUE)
-    
-    # Variables ---------------------------------------------------------------
-    num <- sum(get_attr(dat, "active") == 1)
-    
-    immOnNw <- "immunity" %in% dat$temp$nwterms
-    
-    # Status ------------------------------------------------------------------
-    
-    ## Status passed on input network
-    if (immOnNw == FALSE) {
-        if (!is.null(immunity.vector)) {
-            immunity <- immunity.vector
-        } else {
-            immunity <- rpois(n, 0.5) + 1
-        }
-        dat <- set_attr(dat, "immunity", immunity)
+  type <- get_control(dat, "type", override.null.error = TRUE)
+  type <- if (is.null(type)) "None" else type
+  
+  nsteps <- get_control(dat, "nsteps")
+  tergmLite <- get_control(dat, "tergmLite")
+
+  immunity.vector <- get_init(dat, "immunity.vector", override.null.error = TRUE)
+
+  
+  # Variables ---------------------------------------------------------------
+  num <- sum(get_attr(dat, "active") == 1)
+  
+  immOnNw <- "immunity" %in% dat$temp$nwterms
+  
+  # Status ------------------------------------------------------------------
+  
+  ## Status passed on input network
+  if (immOnNw == FALSE) {
+    if (!is.null(immunity.vector)) {
+      immunity <- immunity.vector
     } else {
-        immunity <- get_vertex_attribute(dat$nw[[1]], "immunity")
-        dat <- set_attr(dat, "immunity", immunity)
+      immunity <- rpois(num, 0.5) + 1
     }
-    
-    
-    ## Set up TEA status
-    if (tergmLite == FALSE) {
-        if (statOnNw == FALSE) {
-            dat$nw[[1]] <- set_vertex_attribute(dat$nw[[1]], "immunity", immunity)
-        }
-        dat$nw[[1]] <- activate.vertex.attribute(dat$nw[[1]],
-                                                 prefix = "teimmunity",
-                                                 value = immunity,
-                                                 onset = 1,
-                                                 terminus = Inf)
+    dat <- set_attr(dat, "immunity", immunity)
+  } else {
+    immunity <- get_vertex_attribute(dat$nw[[1]], "immunity")
+    dat <- set_attr(dat, "immunity", immunity)
+  }
+  
+  
+  ## Set up TEA status
+  if (tergmLite == FALSE) {
+    if (immOnNw == FALSE) {
+      dat$nw[[1]] <- set_vertex_attribute(dat$nw[[1]], "immunity", immunity)
     }
-    return(dat)
+    dat$nw[[1]] <- activate.vertex.attribute(dat$nw[[1]],
+                                             prefix = "teimmunity",
+                                             value = immunity,
+                                             onset = 1,
+                                             terminus = Inf)
+  }
+  return(dat)
 }
