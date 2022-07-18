@@ -14,7 +14,7 @@ infect_ise <- function(dat, at) {
   active <- get_attr(dat, "active")
   status <- get_attr(dat, "status")
   infTime <- get_attr(dat, "infTime")
-
+  
   act.rate <- get_param(dat, "act.rate")
   ise.prob <- get_param(dat, "ise.prob")
   
@@ -109,12 +109,11 @@ progress_ir <- function(dat, at) {
   dat <- set_attr(dat, "immunity", immunity)
   dat <- set_attr(dat, "status", immunity)
   
-
+  
   dat <- set_epi(dat, "ir.flow", at, n.ir)
   dat <- set_epi(dat, "r.num", at, sum(active == 1 & status == "r"))
   dat <- set_epi(dat, "meanImmunity", at, mean(immunity))
-
-  print(dat)
+  
   return(dat)
 }
 
@@ -220,7 +219,7 @@ render.d3movie(
   d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
   render.par = render.par,
   plot.par = plot.par,
-  vertex.cex = "ndtvcex",
+  vertex.cex = 1, #"ndtvcex",
   vertex.col = "ndtvcol",
   vertex.border = "lightgrey",
   displaylabels = FALSE)

@@ -8,10 +8,13 @@ copy_datattr_to_nwattr <- function(dat) {
     nwterms <- union(nwterms, special.attr)
     attr.to.copy <- union(nwterms, special.attr)
     attr <- dat$attr[attr.to.copy]
+    print("LOOK HERE")
     if (length(attr.to.copy) > 0) {
         if (length(attr.to.copy) == 1) {
+            print("yes")
             dat$nw[[1]] <- set_vertex_attribute(dat$nw[[1]], names(attr), attr[[1]])
         } else {
+            print("no")
             dat$nw[[1]] <- set_vertex_attribute(dat$nw[[1]], names(attr), attr)
         }
     }
