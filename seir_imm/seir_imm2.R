@@ -1,0 +1,223 @@
+#### Standard SEIR Model with Immunity
+
+#### Library Calls
+
+library("EpiModel")
+library("ndtv")
+
+#### Modules
+
+## Infection
+
+infect_ise <- function(dat, at) {
+  
+  active <- get_attr(dat, "active")
+  status <- get_attr(dat, "status")
+  infTime <- get_attr(dat, "infTime")
+
+  act.rate <- get_param(dat, "act.rate")
+  ise.prob <- get_param(dat, "ise.prob")
+  
+  idsInf <- which(active == 1 & status == "i")
+  nActive <- sum(active == 1)
+  
+  nElig <- length(idsInf)
+  nInf <- 0
+  
+  if (nElig > 0 && nElig < nActive) {
+    
+    # get discord el with sus attributes
+    del <- discord_edgelist(dat, at)
+    del <- n_attr_edgelist(dat, at, del, susattr = "immunity")
+    
+    if (!(is.null(del))) {
+      
+      del$transProb <- ise.prob
+      del$actRate <- act.rate
+      del$adjProb <- 1 - (1 - del$transProb)^del$actRate
+      del$finalProb <- del$adjProb^del$sus.immunity
+      
+      transmit <- rbinom(nrow(del), 1, del$finalProb)
+      del <- del[which(transmit == 1), ]
+      idsNewInf <- unique(del$sus)
+      nInf <- length(idsNewInf)
+      
+      if (nInf > 0) {
+        status[idsNewInf] <- "e"
+        infTime[idsNewInf] <- at
+        
+        dat <- set_attr(dat, "status", status)
+        dat <- set_attr(dat, "infTime", infTime)
+      }
+    }
+  }
+  dat <- set_epi(dat, "se.flow", at, nInf)
+  
+  return(dat)
+}
+
+## Progression
+
+progress_ei <- function(dat, at) {
+  
+  active <- get_attr(dat, "active")
+  status <- get_attr(dat, "status")
+  
+  ei.rate <- get_param(dat, "ei.rate")
+  
+  n.ei <- 0
+  idsElig.ei <- which(active == 1 & status == "e")
+  nElig.ei <- length(idsElig.ei)
+  
+  if (nElig.ei > 0) {
+    vec.ei <- which(rbinom(nElig.ei, 1, ei.rate) == 1)
+    if (length(vec.ei) > 0) {
+      ids.ei <- idsElig.ei[vec.ei]
+      n.ei <- length(ids.ei)
+      status[ids.ei] <- "i"
+    }
+  }
+  dat <- set_attr(dat, "status", status)
+  
+  dat <- set_epi(dat, "ei.flow", at, n.ei)
+  dat <- set_epi(dat, "e.num", at, sum(active == 1 & status == "e"))
+  
+  return(dat)
+}
+
+progress_ir <- function(dat, at) {
+  
+  active <- get_attr(dat, "active")
+  status <- get_attr(dat, "status")
+  immunity <- get_attr(dat, "immunity")
+  
+  ir.rate <- get_param(dat, "ir.rate")
+  
+  n.ir <- 0
+  idsElig.ir <- which(active == 1 & status == "i")
+  nElig.ir <- length(idsElig.ir)
+  
+  if (nElig.ir > 0) {
+    vec.ir <- which(rbinom(nElig.ir, 1, ir.rate) == 1)
+    if (length(vec.ir) > 0) {
+      ids.ir <- idsElig.ir[vec.ir]
+      n.ir <- length(ids.ir)
+      status[ids.ir] <- "r"
+      immunity[ids.ir] <- immunity[ids.ir] + 2
+    }
+  }
+  dat <- set_attr(dat, "status", status)
+  dat <- set_attr(dat, "immunity", immunity)
+  
+  dat <- set_epi(dat, "ir.flow", at, n.ir)
+  dat <- set_epi(dat, "r.num", at, sum(active == 1 & status == "r"))
+  
+  return(dat)
+}
+
+progress_rs <- function(dat, at) {
+  
+  active <- get_attr(dat, "active")
+  status <- get_attr(dat, "status")
+  
+  rs.rate <- get_param(dat, "ir.rate")
+  
+  n.rs <- 0
+  idsElig.rs <- which(active == 1 & status == "r")
+  nElig.rs <- length(idsElig.rs)
+  
+  if (nElig.rs > 0) {
+    vec.rs <- which(rbinom(nElig.rs, 1, rs.rate) == 1)
+    if (length(vec.rs) > 0) {
+      ids.rs <- idsElig.rs[vec.rs]
+      n.rs <- length(ids.rs)
+      status[ids.rs] <- "s"
+    }
+  }
+  dat <- set_attr(dat, "status", status)
+  
+  dat <- set_epi(dat, "rs.flow", at, n.rs)
+  dat <- set_epi(dat, "s.num", at, sum(active == 1 & status == "s"))
+  
+  return(dat)
+}
+
+### Network Simulation
+
+nw <- network::network.initialize(100, directed = FALSE)
+
+est <- netest(nw, formation = ~ edges, target.stats = 30,
+              coef.diss = dissolution_coefs(~ offset(edges), 10))
+
+param <- param.net(ise.prob = 0.25,
+                   ei.rate = 0.075, ir.rate = 0.05, rs.rate = 0.1,
+                   act.rate = 2)
+
+init <- init.net(i.num = 10)
+
+control <- control.net(type = NULL, nsteps = 50, nsims = 1, 
+                       infection.FUN = NULL, recovery.FUN = NULL,
+                       initialize.FUN = e_initialize.net, infect_ise.FUN = infect_ise,
+                       progress_ei.FUN = progress_ei, progress_ir.FUN = progress_ir,
+                       progress_rs.FUN = progress_rs, 
+                       skip.check = TRUE, 
+                       resimulate.network = FALSE, verbose.int = 0)
+
+# Simulate the epidemic model
+sim <- netsim(est, param, init, control)
+
+# Plot the results
+par(mfrow = c(1, 1))
+plot(sim, y = c("s.num", "e.num", "i.num", "r.num"),
+     mean.col = 1:4, qnts = 1, qnts.col = 1:4, legend = TRUE)
+
+### Animations
+ntwk <- get_network(sim)
+ntwk <- n_size_tea(ntwk, "teimmunity")
+ntwk <- e_color_tea(ntwk)
+ntwk_light <- e_color_tea(ntwk, alpha = 0.15)
+
+timeline(ntwk)
+
+# set up layout to draw plots under timeline
+layout(matrix(c(1,1,1,2,3,4),nrow=2,ncol=3,byrow=TRUE))
+# plot a proximity.timeline illustrating infection spread
+# proximity.timeline(ntwk_light, vertex.col = 'ndtvcol',
+#                    spline.style='color.attribute',
+#                    mode = 'sammon',default.dist=10,
+#                    chain.direction='reverse')
+#plot 3 static cross-sectional networks 
+# (beginning, middle and end) underneath for comparison
+plot(network.collapse(ntwk,at=1),vertex.col='ndtvcol',
+     main='simulated network at t=1', vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk,at=25),vertex.col='ndtvcol',
+     main='simulated network at=100', vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk,at=50),vertex.col='ndtvcol',
+     main='simulated network at t=200', vertex.cex = 1.5, edge.lwd = 2)
+layout(1) # reset the layout
+
+
+# render an animation of the network
+
+render.par <- list(tween.frames=10,show.time=TRUE,
+                   show.stats=NULL)
+plot.par <- list(mar = c(0, 0, 0, 0))
+
+# render.animation(ntwk, render.par = render.par, vertex.col='ndtvcol', displaylabels=FALSE)
+# ani.replay()
+
+compute.animation(ntwk,animation.mode = 'MDSJ', chain.direction = 'reverse', verbose=FALSE)
+
+render.d3movie(
+  ntwk,
+  vertex.tooltip = function(slice){paste('name:',slice%v%'vertex.names','<br>',
+                                         'status:', slice%v%'testatus', '<br>',
+                                         'immunity:', slice%v%'teimmunity')},
+  d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
+  render.par = render.par,
+  plot.par = plot.par,
+  vertex.cex = "ndtvcex",
+  vertex.col = "ndtvcol",
+  vertex.border = "lightgrey",
+  displaylabels = FALSE)
+

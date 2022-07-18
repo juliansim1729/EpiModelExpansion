@@ -169,7 +169,7 @@ init_status.net <- function(dat) {
     infTime <- rep(NA, length(status))
     infTime.vector <- get_init(dat, "infTime.vector",
                                override.null.error = TRUE)
-    
+
     if (!is.null(infTime.vector)) {
       infTime <- infTime.vector
     } else {
@@ -195,8 +195,6 @@ init_status.net <- function(dat) {
         }
       }
     }
-    
-    print(infTime)
     dat <- set_attr(dat, "infTime", infTime)
   }
   
@@ -219,6 +217,7 @@ init_immunity.net <- function(dat) {
   immOnNw <- "immunity" %in% dat$temp$nwterms
   
   # Status ------------------------------------------------------------------
+  
   
   ## Status passed on input network
   if (immOnNw == FALSE) {
@@ -245,5 +244,7 @@ init_immunity.net <- function(dat) {
                                              onset = 1,
                                              terminus = Inf)
   }
+  print(dat$nw)
+  
   return(dat)
 }
