@@ -51,7 +51,6 @@ infect_ise <- function(dat, at) {
   nInf <- 0
   
   if (nElig > 0 && nElig < nActive) {
-    
     del <- discord_edgelist(dat, at)
     del <- n_attr_edgelist(dat, at, del, susattr = "immunity")
     
@@ -111,9 +110,8 @@ infect_ese <- function(dat, at) {
       idsNewInf <- unique(del$sus)
       nInf <- length(idsNewInf)
       if (nInf > 0) {
-        print(paste(nInf, at, idsNewInf))
         dat$attr$status[idsNewInf] <- "e"
-        # dat$attr$infTime[idsNewInf] <- at
+        dat$attr$infTime[idsNewInf] <- at
       }
     }
   }
@@ -224,9 +222,9 @@ est <- netest(nw, formation = ~ edges, target.stats = 50,
               coef.diss = dissolution_coefs(~ offset(edges), 10))
 
 # Epidemic model parameterization
-param <- param.net(ise.prob = 0.5, ese.prob = 1,
+param <- param.net(ise.prob = 0.5, ese.prob = 0.5,
                    ei.rate = 0.075, ir.rate = 0.05, rs.rate = 0.1,
-                   act.rate = 2, imm.decay = 0.04)
+                   act.rate = 1, imm.decay = 0.04)
 init <- init.net(i.num = 10)
 control <- control.net(nsteps = 50, nsims = 5, initialize.FUN = e_initialize.net, 
                        immunity.FUN = immunity,
@@ -254,17 +252,17 @@ timeline(ntwk)
 # set up layout to draw plots under timeline
 layout(matrix(c(1,1,1,2,3,4),nrow=2,ncol=3,byrow=TRUE))
 # plot a proximity.timeline illustrating infection spread
-# proximity.timeline(ntwk_light, vertex.col = 'ndtvcol',
-#                    spline.style='color.attribute',
-#                    mode = 'sammon',default.dist=10,
-#                    chain.direction='reverse')
+proximity.timeline(ntwk_light, vertex.col = 'ndtvcol',
+                   spline.style='color.attribute',
+                   mode = 'sammon',default.dist=10,
+                   chain.direction='reverse')
 #plot 3 static cross-sectional networks 
 # (beginning, middle and end) underneath for comparison
 plot(network.collapse(ntwk,at=1),vertex.col='ndtvcol',
      main='simulated network at t=1', vertex.cex = 1.5, edge.lwd = 2)
-plot(network.collapse(ntwk,at=25),vertex.col='ndtvcol',
+plot(network.collapse(ntwk,at=100),vertex.col='ndtvcol',
      main='simulated network at=100', vertex.cex = 1.5, edge.lwd = 2)
-plot(network.collapse(ntwk,at=50),vertex.col='ndtvcol',
+plot(network.collapse(ntwk,at=200),vertex.col='ndtvcol',
      main='simulated network at t=200', vertex.cex = 1.5, edge.lwd = 2)
 layout(1) # reset the layout
 

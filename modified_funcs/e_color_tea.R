@@ -26,11 +26,11 @@ e_color_tea <- function(nd, old.var = "testatus", new.var = "ndtvcol", alpha = 0
 }
 
 n_size_tea <- function(nd, old.var, new.var = "ndtvcex", verbose = TRUE) {
-
+  
   times <- 1:max(get.change.times(nd))
   for (at in times) {
     attr <- get.vertex.attribute.active(nd, old.var, at = at)
-
+    
     nd <- activate.vertex.attribute(nd, prefix = new.var, value = 1 + (attr/3),
                                     onset = at, terminus = Inf)
     if (verbose == TRUE) {
@@ -39,6 +39,7 @@ n_size_tea <- function(nd, old.var, new.var = "ndtvcex", verbose = TRUE) {
   }
   return(nd)
 }
+
 
 n_find_ntwk_states <- function(nd) {
   foundStates <- vector()

@@ -25,7 +25,6 @@ infect_ise <- function(dat, at) {
   nInf <- 0
   
   if (nElig > 0 && nElig < nActive) {
-    
     # get discord el with sus attributes
     del <- discord_edgelist(dat, at)
     del <- n_attr_edgelist(dat, at, del, susattr = "immunity")
@@ -107,12 +106,12 @@ progress_ir <- function(dat, at) {
     }
   }
   dat <- set_attr(dat, "immunity", immunity)
-  dat <- set_attr(dat, "status", immunity)
+  dat <- set_attr(dat, "status", status)
   
   
   dat <- set_epi(dat, "ir.flow", at, n.ir)
   dat <- set_epi(dat, "r.num", at, sum(active == 1 & status == "r"))
-  dat <- set_epi(dat, "meanImmunity", at, mean(immunity))
+  # dat <- set_epi(dat, "meanImmunity", at, mean(immunity))
   
   return(dat)
 }
@@ -147,7 +146,7 @@ progress_rs <- function(dat, at) {
 
 ### Network Simulation
 
-nw <- network::network.initialize(100, directed = FALSE)
+nw <- network_initialize(100, directed = FALSE)
 
 est <- netest(nw, formation = ~ edges, target.stats = 30,
               coef.diss = dissolution_coefs(~ offset(edges), 10))
@@ -162,7 +161,7 @@ control <- control.net(type = NULL, nsteps = 50, nsims = 1,
                        infection.FUN = NULL, recovery.FUN = NULL,
                        initialize.FUN = e_initialize.net, infect_ise.FUN = infect_ise,
                        progress_ei.FUN = progress_ei, progress_ir.FUN = progress_ir,
-                       progress_rs.FUN = progress_rs, 
+                       progress_rs.FUN = progress_rs, nwupdate.FUN = e_nwupdate.net, 
                        skip.check = TRUE, 
                        resimulate.network = FALSE, verbose.int = 0)
 
@@ -219,7 +218,7 @@ render.d3movie(
   d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
   render.par = render.par,
   plot.par = plot.par,
-  vertex.cex = 1, #"ndtvcex",
+  vertex.cex = "ndtvcex",
   vertex.col = "ndtvcol",
   vertex.border = "lightgrey",
   displaylabels = FALSE)

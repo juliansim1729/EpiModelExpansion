@@ -1,4 +1,5 @@
 copy_datattr_to_nwattr <- function(dat) {
+    print("AYAYAYAYAY")
     nwterms <- dat$temp$nwterms
     special.attr <- "status"
     if (dat$param$groups == 2) {
