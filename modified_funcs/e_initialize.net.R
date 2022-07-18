@@ -50,7 +50,7 @@ e_initialize.net <- function(x, param, init, control, s) {
         
         
         # Summary Stats -----------------------------------------------------------
-        dat <- do.call(control[["prevalence.FUN"]], list(dat, at = 1))
+            dat <- do.call(control[["prevalence.FUN"]], list(dat, at = 1))
         
         # Restart/Reinit Simulations ----------------------------------------------
     } else if (control$start > 1) {
@@ -224,7 +224,7 @@ init_immunity.net <- function(dat) {
     if (!is.null(immunity.vector)) {
       immunity <- immunity.vector
     } else {
-      immunity <- rpois(num, 0.5) + 1
+      immunity <- rpois(num, 0.25) + 1
     }
     dat <- set_attr(dat, "immunity", immunity)
   } else {
@@ -244,7 +244,6 @@ init_immunity.net <- function(dat) {
                                              onset = 1,
                                              terminus = Inf)
   }
-  print(dat$nw)
-  
+
   return(dat)
 }

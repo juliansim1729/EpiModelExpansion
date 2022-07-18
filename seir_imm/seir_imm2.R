@@ -106,12 +106,15 @@ progress_ir <- function(dat, at) {
       immunity[ids.ir] <- immunity[ids.ir] + 2
     }
   }
-  dat <- set_attr(dat, "status", status)
   dat <- set_attr(dat, "immunity", immunity)
+  dat <- set_attr(dat, "status", immunity)
   
+
   dat <- set_epi(dat, "ir.flow", at, n.ir)
   dat <- set_epi(dat, "r.num", at, sum(active == 1 & status == "r"))
-  
+  dat <- set_epi(dat, "meanImmunity", at, mean(immunity))
+
+  print(dat)
   return(dat)
 }
 
@@ -134,6 +137,7 @@ progress_rs <- function(dat, at) {
       status[ids.rs] <- "s"
     }
   }
+  
   dat <- set_attr(dat, "status", status)
   
   dat <- set_epi(dat, "rs.flow", at, n.rs)
@@ -149,8 +153,8 @@ nw <- network::network.initialize(100, directed = FALSE)
 est <- netest(nw, formation = ~ edges, target.stats = 30,
               coef.diss = dissolution_coefs(~ offset(edges), 10))
 
-param <- param.net(ise.prob = 0.25,
-                   ei.rate = 0.075, ir.rate = 0.05, rs.rate = 0.1,
+param <- param.net(ise.prob = 0.35,
+                   ei.rate = 0.15, ir.rate = 0.1, rs.rate = 0.15,
                    act.rate = 2)
 
 init <- init.net(i.num = 10)
