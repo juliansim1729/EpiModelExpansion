@@ -16,15 +16,20 @@ time_passing <- function(dat, at) {
   status <- get_attr(dat, "status")
   
   immunity <- get_attr(dat, "immunity")
-  imm_decay <- get_param(dat, "imm.decay")
+  imm.decay <- get_param(dat, "imm.decay")
+  imm.nRecMod <- get_param(dat, "imm.nRecMod")
   
+  idsNotRec <- which(active == 1 & status != "r")
+  idsRec <- which(active == 1 & status == "r")
   idsElig <- which(active == 1)
   nElig <- length(idsElig)
 
   if (nElig > 0) {
     # passing effects
-    immunity[idsElig] <- ifelse(immunity[idsElig] > 0, immunity[idsElig] - 
-                         imm_decay, immunity[idsElig])
+    immunity[idsNotRec] <- ifelse(immunity[idsNotRec] > 0, immunity[idsNotRec] - 
+                                     imm.nRecMod*imm.decay, immunity[idsNotRec])
+    immunity[idsRec] <- ifelse(immunity[idsRec] > 0, immunity[idsRec] - 
+                                     imm.decay, immunity[idsRec])
     immunity[idsElig] <- ifelse(immunity[idsElig] > 0, immunity[idsElig], 0)
   }
   
@@ -58,7 +63,7 @@ infect_ise <- function(dat, at) {
       del$transProb <- ise.prob
       del$actRate <- act.rate
       del$adjProb <- 1 - (1 - del$transProb)^del$actRate
-      del$finalProb <- del$adjProb^log(1 + del$sus.immunity)
+      del$finalProb <- del$adjProb^(1 + del$sus.immunity)
       
       transmit <- rbinom(nrow(del), 1, del$finalProb)
       del <- del[which(transmit == 1), ]
@@ -75,6 +80,8 @@ infect_ise <- function(dat, at) {
     }
   }
   dat <- set_epi(dat, "se.flow", at, nInf)
+  dat <- set_epi(dat, "e.num", at, sum(active == 1 & status == "e"))
+  
   
   return(dat)
 }
@@ -103,7 +110,7 @@ progress_ei <- function(dat, at) {
   dat <- set_attr(dat, "status", status)
   
   dat <- set_epi(dat, "ei.flow", at, n.ei)
-  dat <- set_epi(dat, "e.num", at, sum(active == 1 & status == "e"))
+  dat <- set_epi(dat, "i.num", at, sum(active == 1 & status == "i"))
   
   return(dat)
 }
@@ -115,6 +122,7 @@ progress_ir <- function(dat, at) {
   immunity <- get_attr(dat, "immunity")
   
   ir.rate <- get_param(dat, "ir.rate")
+  imm.gain <- get_param(dat, "imm.gain")
   
   n.ir <- 0
   idsElig.ir <- which(active == 1 & status == "i")
@@ -126,7 +134,7 @@ progress_ir <- function(dat, at) {
       ids.ir <- idsElig.ir[vec.ir]
       n.ir <- length(ids.ir)
       status[ids.ir] <- "r"
-      immunity[ids.ir] <- immunity[ids.ir] + 2
+      immunity[ids.ir] <- immunity[ids.ir] + imm.gain
     }
   }
   dat <- set_attr(dat, "immunity", immunity)
@@ -144,6 +152,7 @@ progress_rs <- function(dat, at) {
   
   active <- get_attr(dat, "active")
   status <- get_attr(dat, "status")
+  immunity <- get_attr(dat, "immunity")
   
   rs.rate <- get_param(dat, "ir.rate")
   
@@ -152,7 +161,7 @@ progress_rs <- function(dat, at) {
   nElig.rs <- length(idsElig.rs)
   
   if (nElig.rs > 0) {
-    vec.rs <- which(rbinom(nElig.rs, 1, rs.rate) == 1)
+    vec.rs <- which(rbinom(nElig.rs, 1, rs.rate^(1 + immunity[idsElig.rs])) == 1)
     if (length(vec.rs) > 0) {
       ids.rs <- idsElig.rs[vec.rs]
       n.rs <- length(ids.rs)
@@ -175,13 +184,14 @@ nw <- network_initialize(100, directed = FALSE)
 est <- netest(nw, formation = ~ edges, target.stats = 30,
               coef.diss = dissolution_coefs(~ offset(edges), 10))
 
-param <- param.net(ise.prob = 0.4,
-                   ei.rate = 0.4, ir.rate = 0.1, rs.rate = 0.05,
-                   act.rate = 2, imm.decay = 0.1)
+param <- param.net(ise.prob = 0.6,
+                   ei.rate = 0.4, ir.rate = 0.05, rs.rate = 0.015,
+                   imm.gain = 2, imm.decay = 0.05, imm.nRecMod = 2,
+                   act.rate = 2)
 
 init <- init.net(i.num = 10)
 
-control <- control.net(type = NULL, nsteps = 50, nsims = 1, 
+control <- control.net(type = NULL, nsteps = 100, nsims = 1, 
                        infection.FUN = NULL, recovery.FUN = NULL, time_passing.FUN = time_passing,
                        initialize.FUN = e_initialize.net, infect_ise.FUN = infect_ise,
                        progress_ei.FUN = progress_ei, progress_ir.FUN = progress_ir,
@@ -206,20 +216,27 @@ ntwk_light <- e_color_tea(ntwk, alpha = 0.15)
 timeline(ntwk)
 
 # set up layout to draw plots under timeline
-layout(matrix(c(1,1,1,2,3,4),nrow=2,ncol=3,byrow=TRUE))
+layout(1)
 # plot a proximity.timeline illustrating infection spread
 # proximity.timeline(ntwk_light, vertex.col = 'ndtvcol',
 #                    spline.style='color.attribute',
 #                    mode = 'sammon',default.dist=10,
 #                    chain.direction='reverse')
+layout(matrix(c(1,2,3,4,5,6),nrow=2,ncol=3,byrow=TRUE))
 #plot 3 static cross-sectional networks 
 # (beginning, middle and end) underneath for comparison
 plot(network.collapse(ntwk,at=1),vertex.col='ndtvcol',
      main='simulated network at t=1', vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk,at=12),vertex.col='ndtvcol',
+     main='simulated network at=12', vertex.cex = 1.5, edge.lwd = 2)
 plot(network.collapse(ntwk,at=25),vertex.col='ndtvcol',
-     main='simulated network at=25', vertex.cex = 1.5, edge.lwd = 2)
+     main='simulated network at t=25', vertex.cex = 1.5, edge.lwd = 2)
 plot(network.collapse(ntwk,at=50),vertex.col='ndtvcol',
      main='simulated network at t=50', vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk,at=75),vertex.col='ndtvcol',
+     main='simulated network at=75', vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk,at=100),vertex.col='ndtvcol',
+     main='simulated network at t=100', vertex.cex = 1.5, edge.lwd = 2)
 layout(1) # reset the layout
 
 
