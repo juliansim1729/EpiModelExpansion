@@ -7,6 +7,30 @@ library("ndtv")
 
 #### Modules
 
+## Time
+
+time_passing <- function(dat, at) {
+  
+  # get statements
+  active <- get_attr(dat, "active")
+  status <- get_attr(dat, "status")
+  
+  immunity <- get_attr(dat, "immunity")
+  imm_decay <- get_param(dat, "imm.decay")
+  
+  idsElig <- which(active == 1)
+  nElig <- length(idsElig)
+
+  if (nElig > 0) {
+    # passing effects
+    immunity[idsElig] <- ifelse(immunity[idsElig] > 0, immunity[idsElig] - 
+                         imm_decay, immunity[idsElig])
+    immunity[idsElig] <- ifelse(immunity[idsElig] > 0, immunity[idsElig], 0)
+  }
+  
+  dat <- set_attr(dat, "immunity", immunity)
+}
+
 ## Infection
 
 infect_ise <- function(dat, at) {
@@ -34,7 +58,7 @@ infect_ise <- function(dat, at) {
       del$transProb <- ise.prob
       del$actRate <- act.rate
       del$adjProb <- 1 - (1 - del$transProb)^del$actRate
-      del$finalProb <- del$adjProb^del$sus.immunity
+      del$finalProb <- del$adjProb^log(1 + del$sus.immunity)
       
       transmit <- rbinom(nrow(del), 1, del$finalProb)
       del <- del[which(transmit == 1), ]
@@ -151,14 +175,14 @@ nw <- network_initialize(100, directed = FALSE)
 est <- netest(nw, formation = ~ edges, target.stats = 30,
               coef.diss = dissolution_coefs(~ offset(edges), 10))
 
-param <- param.net(ise.prob = 0.35,
-                   ei.rate = 0.15, ir.rate = 0.1, rs.rate = 0.15,
-                   act.rate = 2)
+param <- param.net(ise.prob = 0.4,
+                   ei.rate = 0.4, ir.rate = 0.1, rs.rate = 0.05,
+                   act.rate = 2, imm.decay = 0.1)
 
 init <- init.net(i.num = 10)
 
 control <- control.net(type = NULL, nsteps = 50, nsims = 1, 
-                       infection.FUN = NULL, recovery.FUN = NULL,
+                       infection.FUN = NULL, recovery.FUN = NULL, time_passing.FUN = time_passing,
                        initialize.FUN = e_initialize.net, infect_ise.FUN = infect_ise,
                        progress_ei.FUN = progress_ei, progress_ir.FUN = progress_ir,
                        progress_rs.FUN = progress_rs, nwupdate.FUN = e_nwupdate.net, 
@@ -193,15 +217,15 @@ layout(matrix(c(1,1,1,2,3,4),nrow=2,ncol=3,byrow=TRUE))
 plot(network.collapse(ntwk,at=1),vertex.col='ndtvcol',
      main='simulated network at t=1', vertex.cex = 1.5, edge.lwd = 2)
 plot(network.collapse(ntwk,at=25),vertex.col='ndtvcol',
-     main='simulated network at=100', vertex.cex = 1.5, edge.lwd = 2)
+     main='simulated network at=25', vertex.cex = 1.5, edge.lwd = 2)
 plot(network.collapse(ntwk,at=50),vertex.col='ndtvcol',
-     main='simulated network at t=200', vertex.cex = 1.5, edge.lwd = 2)
+     main='simulated network at t=50', vertex.cex = 1.5, edge.lwd = 2)
 layout(1) # reset the layout
 
 
 # render an animation of the network
 
-render.par <- list(tween.frames=10,show.time=TRUE,
+render.par <- list(tween.frames=20,show.time=TRUE,
                    show.stats=NULL)
 plot.par <- list(mar = c(0, 0, 0, 0))
 
@@ -216,10 +240,9 @@ render.d3movie(
                                          'status:', slice%v%'testatus', '<br>',
                                          'immunity:', slice%v%'teimmunity')},
   d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
-  render.par = render.par,
-  plot.par = plot.par,
-  vertex.cex = "ndtvcex",
-  vertex.col = "ndtvcol",
-  vertex.border = "lightgrey",
-  displaylabels = FALSE)
+  render.par = render.par, plot.par = plot.par,
+  vertex.cex = "ndtvcex", vertex.col = "ndtvcol", vertex.border = "lightgrey",
+  label.cex=0.8,label.col="black", verbose = FALSE,
+  main = "Simulated Spread of SEIR with Tracked Immunity on a Network",
+  displaylabels = TRUE)
 

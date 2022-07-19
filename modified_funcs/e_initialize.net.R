@@ -224,7 +224,7 @@ init_immunity.net <- function(dat) {
     if (!is.null(immunity.vector)) {
       immunity <- immunity.vector
     } else {
-      immunity <- rpois(num, 0.5) + 1
+      immunity <- rpois(num, 0.25)
     }
     dat <- set_attr(dat, "immunity", immunity)
   } else {
