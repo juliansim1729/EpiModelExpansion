@@ -3,6 +3,7 @@ e_nwupdate.net <- function(dat, at) {
   ## Attributes
   status <- get_attr(dat, "status")
   immunity <- get_attr(dat, "immunity")
+  age <- get_attr(dat, "age")
   active <- get_attr(dat, "active")
   entrTime <- get_attr(dat, "entrTime")
   exitTime <- get_attr(dat, "exitTime")
@@ -85,6 +86,13 @@ e_nwupdate.net <- function(dat, at) {
                                              value = immunity,
                                              onset = at,
                                              terminus = Inf)
+    
+    dat$nw[[1]] <- activate.vertex.attribute(dat$nw[[1]],
+                                             prefix = "teage",
+                                             value = age,
+                                             onset = at,
+                                             terminus = Inf)
+    
   }
   
   # Cummulative edgelist

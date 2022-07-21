@@ -14,10 +14,12 @@ time_passing <- function(dat, at) {
   # get statements
   active <- get_attr(dat, "active")
   status <- get_attr(dat, "status")
-  
   immunity <- get_attr(dat, "immunity")
+  age <- get_attr(dat, "age")
+  
   imm.decay <- get_param(dat, "imm.decay")
   imm.nRecMod <- get_param(dat, "imm.nRecMod")
+  act.rate <- get_param(dat, "act.rate")
   
   idsNotRec <- which(active == 1 & status != "r")
   idsRec <- which(active == 1 & status == "r")
@@ -25,15 +27,22 @@ time_passing <- function(dat, at) {
   nElig <- length(idsElig)
 
   if (nElig > 0) {
-    # passing effects
+    # immunity
     immunity[idsNotRec] <- ifelse(immunity[idsNotRec] > 0, immunity[idsNotRec] - 
                                      imm.nRecMod*imm.decay, immunity[idsNotRec])
     immunity[idsRec] <- ifelse(immunity[idsRec] > 0, immunity[idsRec] - 
                                      imm.decay, immunity[idsRec])
     immunity[idsElig] <- ifelse(immunity[idsElig] > 0, immunity[idsElig], 0)
+    
+    # age
+    age[idsElig] <- age[idsElig] + act.rate * 1 / 365
   }
   
   dat <- set_attr(dat, "immunity", immunity)
+  dat <- set_attr(dat, "age", age)
+  
+  dat <- set_epi(dat, "meanImmunity", at, mean(immunity, na.rm = TRUE))
+  dat <- set_epi(dat, "meanAge", at, mean(age, na.rm = TRUE))
 }
 
 ## Infection
@@ -177,16 +186,109 @@ progress_rs <- function(dat, at) {
   return(dat)
 }
 
+## Demographic
+
+dfunc <- function(dat, at) {
+    
+    ## Attributes
+    active <- get_attr(dat, "active")
+    exitTime <- get_attr(dat, "exitTime")
+    age <- get_attr(dat, "age")
+    status <- get_attr(dat, "status")
+    
+    ## Parameters
+    dep.rates <- get_param(dat, "departure.rates")
+    dep.dis.mult <- get_param(dat, "departure.disease.mult")
+    
+    ## Query alive
+    idsElig <- which(active == 1)
+    nElig <- length(idsElig)
+    
+    ## Initialize trackers
+    nDepts <- 0
+    idsDepts <- NULL
+    
+    if (nElig > 0) {
+        
+        ## Calculate age-specific departure rates for each eligible node ##
+        ## Everyone older than 85 gets the final mortality rate
+        whole_ages_of_elig <- pmin(ceiling(age[idsElig]), 86)
+        drates_of_elig <- dep.rates[whole_ages_of_elig]
+        
+        ## Multiply departure rates for diseased persons
+        idsElig.inf <- which(status[idsElig] == "i")
+        drates_of_elig[idsElig.inf] <- drates_of_elig[idsElig.inf] * 
+            dep.dis.mult
+        
+        ## Simulate departure process
+        vecDepts <- which(rbinom(nElig, 1, drates_of_elig) == 1)
+        idsDepts <- idsElig[vecDepts]
+        nDepts <- length(idsDepts)
+        
+        ## Update nodal attributes
+        if (nDepts > 0) {
+            active[idsDepts] <- 0
+            exitTime[idsDepts] <- at
+        }
+    }
+    
+    ## Set updated attributes
+    dat <- set_attr(dat, "active", active)
+    dat <- set_attr(dat, "exitTime", exitTime)
+    
+    ## Summary statistics ##
+    dat <- set_epi(dat, "total.deaths", at, nDepts)
+    
+    # covid deaths
+    covid.deaths <- length(intersect(idsDepts, which(status == "i")))
+    dat <- set_epi(dat, "covid.deaths", at, covid.deaths)
+    
+    return(dat)
+}
+
+afunc <- function(dat, at) {
+    
+    ## Parameters ##
+    n <- get_epi(dat, "num", at - 1)
+    a.rate <- get_param(dat, "arrival.rate")
+    
+    ## Process ##
+    nArrivalsExp <- n * a.rate
+    nArrivals <- rpois(1, nArrivalsExp)
+    
+    # Update attributes
+    if (nArrivals > 0) {
+        dat <- append_core_attr(dat, at = at, n.new = nArrivals)
+        dat <- append_attr(dat, "status", "s", nArrivals)
+        dat <- append_attr(dat, "infTime", NA, nArrivals)
+        dat <- append_attr(dat, "age", 0, nArrivals)
+    }
+    
+    ## Summary statistics ##
+    dat <- set_epi(dat, "a.flow", at, nArrivals)
+    
+    return(dat)
+}
+
 ### Network Simulation
 
 nw <- network_initialize(100, directed = FALSE)
 
-est <- netest(nw, formation = ~ edges, target.stats = 30,
+est <- netest(nw, formation = ~ edges, target.stats = 100,
               coef.diss = dissolution_coefs(~ offset(edges), 10))
+
+# death rate per capita
+dr_pc <- c(588.45, 24.8, 11.7, 14.55, 47.85, 88.2, 105.65, 127.2,
+                    154.3, 206.5, 309.3, 495.1, 736.85, 1051.15, 1483.45,
+                    2294.15, 3642.95, 6139.4, 13938.3) / 1e5 / 365
+age_spans <- c(1, 4, rep(5, 16), 1)
+dr_vec <- rep(dr_pc, times = age_spans)
 
 param <- param.net(ise.prob = 0.6,
                    ei.rate = 0.4, ir.rate = 0.05, rs.rate = 0.015,
                    imm.gain = 2, imm.decay = 0.05, imm.nRecMod = 2,
+                   departure.rates = dr_vec, departure.disease.mult = 100,
+                   arrival.rate = 1/(365*85),
                    act.rate = 2)
 
 init <- init.net(i.num = 10)
@@ -195,7 +297,8 @@ control <- control.net(type = NULL, nsteps = 100, nsims = 1,
                        infection.FUN = NULL, recovery.FUN = NULL, time_passing.FUN = time_passing,
                        initialize.FUN = e_initialize.net, infect_ise.FUN = infect_ise,
                        progress_ei.FUN = progress_ei, progress_ir.FUN = progress_ir,
-                       progress_rs.FUN = progress_rs, nwupdate.FUN = e_nwupdate.net, 
+                       progress_rs.FUN = progress_rs, nwupdate.FUN = e_nwupdate.net,
+                       departures.FUN = dfunc, arrivals.FUN = afunc,
                        skip.check = TRUE, 
                        resimulate.network = FALSE, verbose.int = 0)
 
@@ -255,7 +358,8 @@ render.d3movie(
   ntwk,
   vertex.tooltip = function(slice){paste('name:',slice%v%'vertex.names','<br>',
                                          'status:', slice%v%'testatus', '<br>',
-                                         'immunity:', slice%v%'teimmunity')},
+                                         'immunity:', round(slice%v%'teimmunity', 3), '<br>',
+                                         'age:', round(slice%v%'teage', 3))},
   d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
   render.par = render.par, plot.par = plot.par,
   vertex.cex = "ndtvcex", vertex.col = "ndtvcol", vertex.border = "lightgrey",

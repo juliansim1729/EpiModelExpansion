@@ -39,8 +39,11 @@ e_initialize.net <- function(x, param, init, control, s) {
         ## Infection Status and Time
         dat <- init_status.net(dat)
         
-        ## Immunity Status and Time
+        ## Immunity
         dat <- init_immunity.net(dat)
+        
+        ## Age
+        dat <- init_age.net(dat)
         
         # Conversions for tergmLite
         tergmLite <- get_control(dat, "tergmLite")
@@ -216,10 +219,9 @@ init_immunity.net <- function(dat) {
   
   immOnNw <- "immunity" %in% dat$temp$nwterms
   
-  # Status ------------------------------------------------------------------
+  # Immunity  ------------------------------------------------------------------
   
-  
-  ## Status passed on input network
+  ## Immunity passed on input network
   if (immOnNw == FALSE) {
     if (!is.null(immunity.vector)) {
       immunity <- immunity.vector
@@ -231,7 +233,6 @@ init_immunity.net <- function(dat) {
     immunity <- get_vertex_attribute(dat$nw[[1]], "immunity")
     dat <- set_attr(dat, "immunity", immunity)
   }
-  
   
   ## Set up TEA status
   if (tergmLite == FALSE) {
@@ -246,4 +247,50 @@ init_immunity.net <- function(dat) {
   }
 
   return(dat)
+}
+
+init_age.net <- function(dat) {
+    type <- get_control(dat, "type", override.null.error = TRUE)
+    type <- if (is.null(type)) "None" else type
+    
+    nsteps <- get_control(dat, "nsteps")
+    tergmLite <- get_control(dat, "tergmLite")
+    
+    age.vector <- get_init(dat, "age.vector", override.null.error = TRUE)
+    
+    
+    # Variables ---------------------------------------------------------------
+    num <- sum(get_attr(dat, "active") == 1)
+    
+    ageOnNw <- "age" %in% dat$temp$nwterms
+    
+    # Age  ------------------------------------------------------------------
+    
+    ## Age passed on input network
+    if (ageOnNw == FALSE) {
+        if (!is.null(age.vector)) {
+            age <- age.vector
+        } else {
+            ages <- 0:85
+            age <- sample(ages, num, replace = TRUE)
+        }
+        dat <- set_attr(dat, "age", age)
+    } else {
+        age <- get_vertex_attribute(dat$nw[[1]], "age")
+        dat <- set_attr(dat, "age", age)
+    }
+    
+    ## Set up TEA status
+    if (tergmLite == FALSE) {
+        if (ageOnNw == FALSE) {
+            dat$nw[[1]] <- set_vertex_attribute(dat$nw[[1]], "age", age)
+        }
+        dat$nw[[1]] <- activate.vertex.attribute(dat$nw[[1]],
+                                                 prefix = "teage",
+                                                 value = age,
+                                                 onset = 1,
+                                                 terminus = Inf)
+    }
+    
+    return(dat)
 }
