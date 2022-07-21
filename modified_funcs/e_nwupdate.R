@@ -1,6 +1,6 @@
 e_nwupdate.net <- function(dat, at) {
   
-  ## Attributes
+  ### Attributes
   status <- get_attr(dat, "status")
   immunity <- get_attr(dat, "immunity")
   age <- get_attr(dat, "age")
