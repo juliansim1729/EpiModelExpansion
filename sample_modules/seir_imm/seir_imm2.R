@@ -152,7 +152,7 @@ progress_ir <- function(dat, at) {
   
   dat <- set_epi(dat, "ir.flow", at, n.ir)
   dat <- set_epi(dat, "r.num", at, sum(active == 1 & status == "r"))
-  # dat <- set_epi(dat, "meanImmunity", at, mean(immunity))
+  dat <- set_epi(dat, "meanImmunity", at, mean(immunity))
   
   return(dat)
 }
@@ -274,7 +274,7 @@ afunc <- function(dat, at) {
 
 nw <- network_initialize(100, directed = FALSE)
 
-est <- netest(nw, formation = ~ edges, target.stats = 100,
+est <- netest(nw, formation = ~ edges, target.stats = 45,
               coef.diss = dissolution_coefs(~ offset(edges), 10))
 
 # death rate per capita
