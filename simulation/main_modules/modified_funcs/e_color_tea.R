@@ -31,7 +31,7 @@ n_size_tea <- function(nd, old.var, new.var = "ndtvcex", verbose = TRUE) {
   for (at in times) {
     attr <- get.vertex.attribute.active(nd, old.var, at = at)
     
-    nd <- activate.vertex.attribute(nd, prefix = new.var, value = 1 + (attr/2),
+    nd <- activate.vertex.attribute(nd, prefix = new.var, value = 1 + attr/4,
                                     onset = at, terminus = Inf)
     if (verbose == TRUE) {
       cat("\n", at, "/", max(times), "\t", sep = "")

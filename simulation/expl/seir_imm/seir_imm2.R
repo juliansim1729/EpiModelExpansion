@@ -2,10 +2,14 @@
 
 #### Library Calls
 
+library("ergm")
+library("tergm")
 library("EpiModel")
 library("ndtv")
 
 #### Modules
+
+## Modulos
 
 ## Time
 
@@ -16,6 +20,7 @@ time_passing <- function(dat, at) {
   status <- get_attr(dat, "status")
   immunity <- get_attr(dat, "immunity")
   age <- get_attr(dat, "age")
+  sex <- get_attr(dat, "sex")
   
   imm.decay <- get_param(dat, "imm.decay")
   imm.nRecMod <- get_param(dat, "imm.nRecMod")
@@ -26,6 +31,13 @@ time_passing <- function(dat, at) {
   idsElig <- which(active == 1)
   nElig <- length(idsElig)
 
+  # modular method -- at %% 8 = 0
+  
+  if (at == 3) {
+    dat <- set_epi(dat, "e.num", 1, 0)
+    dat <- set_epi(dat, "r.num", 1, 0)
+  }  
+  
   if (nElig > 0) {
     # immunity
     immunity[idsNotRec] <- ifelse(immunity[idsNotRec] > 0, immunity[idsNotRec] - 
@@ -43,6 +55,13 @@ time_passing <- function(dat, at) {
   
   dat <- set_epi(dat, "meanImmunity", at, mean(immunity, na.rm = TRUE))
   dat <- set_epi(dat, "meanAge", at, mean(age, na.rm = TRUE))
+  
+  
+  dat <- set_epi(dat, "s.num", at, sum(active == 1 & status == "s"))
+  dat <- set_epi(dat, "e.num", at, sum(active == 1 & status == "e"))
+  dat <- set_epi(dat, "i.num", at, sum(active == 1 & status == "i"))
+  dat <- set_epi(dat, "r.num", at, sum(active == 1 & status == "r"))
+  
 }
 
 ## Infection
@@ -72,7 +91,7 @@ infect_ise <- function(dat, at) {
       del$transProb <- ise.prob
       del$actRate <- act.rate
       del$adjProb <- 1 - (1 - del$transProb)^del$actRate
-      del$finalProb <- del$adjProb^(1 + del$sus.immunity)
+      del$finalProb <- del$adjProb^(1 + 2*del$sus.immunity)
       
       transmit <- rbinom(nrow(del), 1, del$finalProb)
       del <- del[which(transmit == 1), ]
@@ -88,10 +107,7 @@ infect_ise <- function(dat, at) {
       }
     }
   }
-  dat <- set_epi(dat, "se.flow", at, nInf)
-  dat <- set_epi(dat, "e.num", at, sum(active == 1 & status == "e"))
-  
-  
+
   return(dat)
 }
 
@@ -117,9 +133,6 @@ progress_ei <- function(dat, at) {
     }
   }
   dat <- set_attr(dat, "status", status)
-  
-  dat <- set_epi(dat, "ei.flow", at, n.ei)
-  dat <- set_epi(dat, "i.num", at, sum(active == 1 & status == "i"))
   
   return(dat)
 }
@@ -150,10 +163,6 @@ progress_ir <- function(dat, at) {
   dat <- set_attr(dat, "status", status)
   
   
-  dat <- set_epi(dat, "ir.flow", at, n.ir)
-  dat <- set_epi(dat, "r.num", at, sum(active == 1 & status == "r"))
-  dat <- set_epi(dat, "meanImmunity", at, mean(immunity))
-  
   return(dat)
 }
 
@@ -179,9 +188,6 @@ progress_rs <- function(dat, at) {
   }
   
   dat <- set_attr(dat, "status", status)
-  
-  dat <- set_epi(dat, "rs.flow", at, n.rs)
-  dat <- set_epi(dat, "s.num", at, sum(active == 1 & status == "s"))
   
   return(dat)
 }
@@ -237,12 +243,10 @@ dfunc <- function(dat, at) {
     dat <- set_attr(dat, "exitTime", exitTime)
     
     ## Summary statistics ##
-    dat <- set_epi(dat, "total.deaths", at, nDepts)
-    
+
     # covid deaths
     covid.deaths <- length(intersect(idsDepts, which(status == "i")))
-    dat <- set_epi(dat, "covid.deaths", at, covid.deaths)
-    
+
     return(dat)
 }
 
@@ -265,17 +269,19 @@ afunc <- function(dat, at) {
     }
     
     ## Summary statistics ##
-    dat <- set_epi(dat, "a.flow", at, nArrivals)
-    
+
     return(dat)
 }
 
 ### Network Simulation
 
-nw <- network_initialize(100, directed = FALSE)
+nw <- network_initialize(50, directed = FALSE)
+nw <- network::set.vertex.attribute(nw, "sex", rep(c("M", "F"), each = 25))
 
-est <- netest(nw, formation = ~ edges, target.stats = 45,
-              coef.diss = dissolution_coefs(~ offset(edges), 10))
+# work at est, try updating at time steps, 
+est <- netest(nw, formation = ~ edges, 
+              target.stats = c(50),
+              coef.diss = dissolution_coefs(~ offset(edges), 200))
 
 # death rate per capita
 dr_pc <- c(588.45, 24.8, 11.7, 14.55, 47.85, 88.2, 105.65, 127.2,
@@ -284,16 +290,16 @@ dr_pc <- c(588.45, 24.8, 11.7, 14.55, 47.85, 88.2, 105.65, 127.2,
 age_spans <- c(1, 4, rep(5, 16), 1)
 dr_vec <- rep(dr_pc, times = age_spans)
 
-param <- param.net(ise.prob = 0.6,
+param <- param.net(ise.prob = 0.9,
                    ei.rate = 0.4, ir.rate = 0.05, rs.rate = 0.015,
-                   imm.gain = 2, imm.decay = 0.05, imm.nRecMod = 2,
+                   imm.gain = 2, imm.decay = 0.1, imm.nRecMod = 2,
                    departure.rates = dr_vec, departure.disease.mult = 100,
                    arrival.rate = 1/(365*85),
-                   act.rate = 2)
+                   act.rate = 1)
 
-init <- init.net(i.num = 10)
+init <- init.net(i.num = 5)
 
-control <- control.net(type = NULL, nsteps = 100, nsims = 1, 
+control <- control.net(type = NULL, nsteps = 40, nsims = 1, 
                        infection.FUN = NULL, recovery.FUN = NULL, time_passing.FUN = time_passing,
                        initialize.FUN = e_initialize.net, infect_ise.FUN = infect_ise,
                        progress_ei.FUN = progress_ei, progress_ir.FUN = progress_ir,
@@ -301,6 +307,8 @@ control <- control.net(type = NULL, nsteps = 100, nsims = 1,
                        departures.FUN = dfunc, arrivals.FUN = afunc,
                        skip.check = TRUE, 
                        resimulate.network = FALSE, verbose.int = 0)
+
+
 
 # Simulate the epidemic model
 sim <- netsim(est, param, init, control)
@@ -345,7 +353,7 @@ layout(1) # reset the layout
 
 # render an animation of the network
 
-render.par <- list(tween.frames=20,show.time=TRUE,
+render.par <- list(tween.frames=5,show.time=TRUE,
                    show.stats=NULL)
 plot.par <- list(mar = c(0, 0, 0, 0))
 
@@ -359,7 +367,8 @@ render.d3movie(
   vertex.tooltip = function(slice){paste('name:',slice%v%'vertex.names','<br>',
                                          'status:', slice%v%'testatus', '<br>',
                                          'immunity:', round(slice%v%'teimmunity', 3), '<br>',
-                                         'age:', round(slice%v%'teage', 3))},
+                                         'age:', round(slice%v%'teage', 3), '<br>',
+                                         'sex:', slice%v%'sex')},
   d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
   render.par = render.par, plot.par = plot.par,
   vertex.cex = "ndtvcex", vertex.col = "ndtvcol", vertex.border = "lightgrey",
