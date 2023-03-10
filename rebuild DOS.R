@@ -19,7 +19,7 @@ time_passing <- function(dat, at) {
   
   imm.decay <- get_param(dat, "imm.decay")
   imm.nRecMod <- get_param(dat, "imm.nRecMod")
-
+  
   idsNotRec <- which(active == 1 & status != "r")
   idsRec <- which(active == 1 & status == "r")
   idsElig <- which(active == 1)
@@ -250,111 +250,50 @@ ergm_formula <- ~ edges + nodematch("pd1") + nodematch("pd2") + nodematch("pd3")
 # TODO: Init Loop
 # TODO: Adjust coefs based on some parameter -- e.g. measles vs generic
 
-fmh_sim <- simulate(nw ~ edges + nodematch("pd1") + nodematch("pd2") +
-                      nodematch("pd3") + nodematch("pd4") + nodematch("pd5") +
-                      nodematch("pd6") + nodematch("pd7") + nodematch("pd8") +
-                      nodematch("pd9") + edgecov(as.matrix(faux.mesa.high)) +
-                      edgecov(nocontact_mat),
-                coef = c(0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, Inf, -Inf),
-                control = control.simulate(MCMC.burnin = 1000000, MCMC.interval = 100))
-
-# fmh_sim <- simulate(nw ~ edges + nodematch("pd1") + 
-#                       edgecov(as.matrix(faux.mesa.high)) +
-#                       edgecov(nocontact_mat), 
-#                     coef = c(0, 0.25, Inf, -Inf),
-#                     control = control.simulate(MCMC.burnin = 1000000, MCMC.interval = 100)) 
-
-# coef = c(0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, Inf, -Inf),
-# coef = c(0, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, Inf, -Inf),
-
-target.stats <- attr(fmh_sim, "stats")[1:10]
-print(target.stats)
-
-### 2.4: Network Estimation
-est <- netest(nw, formation = ergm_formula, target.stats = target.stats, 
-              coef.diss = coef.diss, coef.form = c(Inf, -Inf))
-
-### 2.5: Network Control
-nsteps <- 45
-control <- control.net(type = NULL, nsteps = nsteps, nsims = 1, 
-                       infection.FUN = NULL, recovery.FUN = NULL, time_passing.FUN = time_passing,
-                       initialize.FUN = e_initialize.net, infect_ise.FUN = infect_ise,
-                       progress_ei.FUN = progress_ei, progress_ir.FUN = progress_ir,
-                       progress_rs.FUN = progress_rs, nwupdate.FUN = e_nwupdate.net,
-                       skip.check = TRUE, 
-                       resimulate.network = FALSE, verbose.int = 0)
-
-### 2.6: Network Parameters
-param <- param.net(ise.prob = 0.3,
-                   ei.rate = 0.05, ir.rate = 0.03, rs.rate = 0.001,
-                   imm.gain = 2, imm.decay = 0.1, imm.nRecMod = 2,
-                   departure.disease.mult = 100,
-                   arrival.rate = 1/(365*85),
-                   act.rate = 1)
-
-### 2.7: Simulation
-sim <- netsim(est, param, init, control)
-
-## 3: Plots & Animations
-print("Plotting...")
-ntwk <- get_network(sim)
-ntwk <- n_size_tea(ntwk, "teimmunity")
-ntwk <- e_color_tea(ntwk)
-
-### 3.1: Plots
-par(mfrow = c(1, 1))
-
-# way to LOESS smooth everything after t = 1?
-plot(sim, y = c("s.num", "e.num", "i.num", "r.num"),
-     mean.smooth = TRUE,
-     mean.col = 1:4, qnts = 1, qnts.col = 1:4, legend = TRUE)
-
-# layout(matrix(c(1,2,3,4,5,6),nrow=2,ncol=3,byrow=TRUE))
-# 
-# plot(network.collapse(ntwk, at = 1), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', 1),
-#      vertex.cex = 1.5, edge.lwd = 2)
-# plot(network.collapse(ntwk, at = floor(nsteps/5)), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', floor(nsteps/5)),
-#      vertex.cex = 1.5, edge.lwd = 2)
-# plot(network.collapse(ntwk, at = floor(2*nsteps/5)), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', floor(2*nsteps/5)),
-#      vertex.cex = 1.5, edge.lwd = 2)
-# plot(network.collapse(ntwk, at = floor(3*nsteps/5)), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', floor(3*nsteps/5)),
-#      vertex.cex = 1.5, edge.lwd = 2)
-# plot(network.collapse(ntwk, at = floor(4*nsteps/5)), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', floor(4*nsteps/5)),
-#      vertex.cex = 1.5, edge.lwd = 2)
-# plot(network.collapse(ntwk, at = nsteps), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', nsteps),
-#      vertex.cex = 1.5, edge.lwd = 2)
-
-layout(1)
-# 
-### 3.2: Animations
-
-# render an animation of the network
-render.par <- list(tween.frames=5,show.time=TRUE,
-                   show.stats=NULL )# ,extraPlotCmds = expression(
-#  legend(locator(1), legend = slice%v%'testatus')))
-plot.par <- list(mar = c(0, 0, 0, 0))
-
-compute.animation(ntwk,animation.mode = 'MDSJ', chain.direction = 'reverse', verbose=FALSE)
-
-# TODO: floating legend
-render.d3movie(
-  ntwk,
-  vertex.tooltip = function(slice){paste('name:',slice%v%'vertex.names','<br>',
-                                         'status:', slice%v%'testatus', '<br>',
-                                         'immunity:', round(slice%v%'teimmunity', 3), '<br>',
-                                         'age:', round(slice%v%'teage', 3), '<br>',
-                                         'sex:', slice%v%'Sex')},
-  d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
-  render.par = render.par, plot.par = plot.par,
-  vertex.cex = "ndtvcex", vertex.col = "ndtvcol", vertex.border = "lightgrey",
-  label.cex=0.8,label.col="black", verbose = FALSE,
-  main = "Simulated Spread of SEIR with Tracked Immunity on a Network",
-  displaylabels = TRUE)
-
+for (n in 1:3) {
+  fmh_sim <- simulate(nw ~ edges + nodematch("pd1") + nodematch("pd2") +
+                        nodematch("pd3") + nodematch("pd4") + nodematch("pd5") +
+                        nodematch("pd6") + nodematch("pd7") + nodematch("pd8") +
+                        nodematch("pd9") + edgecov(as.matrix(faux.mesa.high)) +
+                        edgecov(nocontact_mat),
+                      coef = c(0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, Inf, -Inf),
+                      control = control.simulate(MCMC.burnin = 1000000, MCMC.interval = 100))
+  
+  target.stats <- attr(fmh_sim, "stats")[1:10]
+  
+  est <- netest(nw, formation = ergm_formula, target.stats = target.stats, 
+                coef.diss = coef.diss, coef.form = c(Inf, -Inf))
+  
+  nsteps <- 45
+  control <- control.net(type = NULL, nsteps = nsteps, nsims = 1, 
+                         infection.FUN = NULL, recovery.FUN = NULL, time_passing.FUN = time_passing,
+                         initialize.FUN = e_initialize.net, infect_ise.FUN = infect_ise,
+                         progress_ei.FUN = progress_ei, progress_ir.FUN = progress_ir,
+                         progress_rs.FUN = progress_rs, nwupdate.FUN = e_nwupdate.net,
+                         skip.check = TRUE, 
+                         resimulate.network = FALSE, verbose.int = 0)
+  
+  ### 2.6: Network Parameters
+  param <- param.net(ise.prob = 0.3,
+                     ei.rate = 0.05, ir.rate = 0.03, rs.rate = 0.001,
+                     imm.gain = 2, imm.decay = 0.1, imm.nRecMod = 2,
+                     departure.disease.mult = 100,
+                     arrival.rate = 1/(365*85),
+                     act.rate = 1)
+  
+  sim <- netsim(est, param, init, control)
+  
+  if (n == 1) {
+    print("Recording...")
+    dflist_plot <- list()
+  }
+  
+  temp_df = data.frame(sim$epi$s.num, sim$epi$e.num, sim$epi$i.num, r.num = sim$epi$r.num)
+  colnames(temp_df) <- c("s.num", "e.num", "i.num", "r.num")
+  
+  dflist_plot[[n]] <- temp_df
+  
+  print(paste(n, "/10", " trials completed.", sep = ""))
+  
+}
 

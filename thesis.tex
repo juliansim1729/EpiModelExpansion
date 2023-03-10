@@ -1,0 +1,135 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Thesis Writeup},
+  pdfauthor={Julian Sim},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Thesis Writeup}
+\author{Julian Sim}
+\date{}
+
+\begin{document}
+\maketitle
+
+\hypertarget{chapter-1-introduction}{%
+\section{Chapter 1: Introduction}\label{chapter-1-introduction}}
+
+The increasing rate of epidemics has posed a challenge for various
+schools, especially for districts which do not have the necessary
+resources to transition to online education. Although the educational
+benefits of different bell schedules have been studied, the purpose of
+this study was to determine whether alternative schedules have the
+potential to reduce the rate at which epidemics spread throughout
+schools. In order to conduct this study, we expanded traditional
+compartmental models to utilize network structures with an extension of
+the EpiModel R package. Utilizing an anonymized network dataset of
+secondary school friendships alongside the previous tools, we were able
+to determine that there is no measurable difference between the standard
+8 period schedule and A/B block schedules.
+
+\hypertarget{chapter-2-literature-review}{%
+\section{Chapter 2: Literature
+Review}\label{chapter-2-literature-review}}
+
+\hypertarget{compartmental-models}{%
+\subsection{Compartmental Models}\label{compartmental-models}}
+
+\hypertarget{networks}{%
+\subsection{Networks}\label{networks}}
+
+\hypertarget{chapter-3-datasets-faux.mesa.high}{%
+\section{Chapter 3: Datasets
+(faux.mesa.high)}\label{chapter-3-datasets-faux.mesa.high}}
+
+The primary dataset utilized within this study is Goodreau's Faux Mesa
+High School, often referred to as faux.mesa.high. This dataset was
+created by fitting data from the first wave of the Add Health Study, a
+national survey of adolescent health. After the student information was
+anonymized via random permutation of student attributes, an ERGM model
+was fit to the data, which was then applied to a network with vertices
+corresponding to each anonymized student.
+
+\hypertarget{chapter-4-methodology-with-example}{%
+\section{Chapter 4: Methodology (with
+example)}\label{chapter-4-methodology-with-example}}
+
+\hypertarget{epimodel}{%
+\subsection{EpiModel}\label{epimodel}}
+
+\hypertarget{schedule-generation}{%
+\subsection{Schedule Generation}\label{schedule-generation}}
+
+\hypertarget{ergm}{%
+\subsection{ERGM}\label{ergm}}
+
+\hypertarget{chapter-5-modeling}{%
+\section{Chapter 5: Modeling}\label{chapter-5-modeling}}
+
+\hypertarget{chapter-6-shiny-with-example}{%
+\section{Chapter 6: Shiny (with
+example)}\label{chapter-6-shiny-with-example}}
+
+\hypertarget{chapter-7-conclusions-future-work}{%
+\section{Chapter 7: Conclusions \& Future
+Work}\label{chapter-7-conclusions-future-work}}
+
+\end{document}

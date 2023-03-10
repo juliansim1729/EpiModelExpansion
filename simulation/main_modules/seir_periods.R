@@ -404,49 +404,49 @@ plot(sim, y = c("s.num", "e.num", "i.num", "r.num"),
 
 layout(matrix(c(1,2,3,4,5,6),nrow=2,ncol=3,byrow=TRUE))
 
-# plot(network.collapse(ntwk, at = 1), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', 1),
-#      vertex.cex = 1.5, edge.lwd = 2)
-# plot(network.collapse(ntwk, at = floor(nsteps/5)), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', floor(nsteps/5)),
-#      vertex.cex = 1.5, edge.lwd = 2)
-# plot(network.collapse(ntwk, at = floor(2*nsteps/5)), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', floor(2*nsteps/5)),
-#      vertex.cex = 1.5, edge.lwd = 2)
-# plot(network.collapse(ntwk, at = floor(3*nsteps/5)), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', floor(3*nsteps/5)),
-#      vertex.cex = 1.5, edge.lwd = 2)
-# plot(network.collapse(ntwk, at = floor(4*nsteps/5)), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', floor(4*nsteps/5)),
-#      vertex.cex = 1.5, edge.lwd = 2)
-# plot(network.collapse(ntwk, at = nsteps), vertex.col='ndtvcol',
-#      main = paste0('simulated network at t=', nsteps),
-#      vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk, at = 1), vertex.col='ndtvcol',
+     main = paste0('simulated network at t=', 1),
+     vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk, at = floor(nsteps/5)), vertex.col='ndtvcol',
+     main = paste0('simulated network at t=', floor(nsteps/5)),
+     vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk, at = floor(2*nsteps/5)), vertex.col='ndtvcol',
+     main = paste0('simulated network at t=', floor(2*nsteps/5)),
+     vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk, at = floor(3*nsteps/5)), vertex.col='ndtvcol',
+     main = paste0('simulated network at t=', floor(3*nsteps/5)),
+     vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk, at = floor(4*nsteps/5)), vertex.col='ndtvcol',
+     main = paste0('simulated network at t=', floor(4*nsteps/5)),
+     vertex.cex = 1.5, edge.lwd = 2)
+plot(network.collapse(ntwk, at = nsteps), vertex.col='ndtvcol',
+     main = paste0('simulated network at t=', nsteps),
+     vertex.cex = 1.5, edge.lwd = 2)
 
 layout(1)
 
 ### 3.2: Animations
 
 # render an animation of the network
-# render.par <- list(tween.frames=5,show.time=TRUE,
-#                    show.stats=NULL )# ,extraPlotCmds = expression(
-#                    #  legend(locator(1), legend = slice%v%'testatus')))
-# plot.par <- list(mar = c(0, 0, 0, 0))
-# 
-# compute.animation(ntwk,animation.mode = 'MDSJ', chain.direction = 'reverse', verbose=FALSE)
-# 
-# # TODO: floating legend
-# render.d3movie(
-#   ntwk,
-#   vertex.tooltip = function(slice){paste('name:',slice%v%'vertex.names','<br>',
-#                                          'status:', slice%v%'testatus', '<br>',
-#                                          'immunity:', round(slice%v%'teimmunity', 3), '<br>',
-#                                          'age:', round(slice%v%'teage', 3), '<br>',
-#                                          'sex:', slice%v%'Sex')},
-#   d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
-#   render.par = render.par, plot.par = plot.par,
-#   vertex.cex = "ndtvcex", vertex.col = "ndtvcol", vertex.border = "lightgrey",
-#   label.cex=0.8,label.col="black", verbose = FALSE,
-#   main = "Simulated Spread of SEIR with Tracked Immunity on a Network",
-#   displaylabels = TRUE)
+render.par <- list(tween.frames=5,show.time=TRUE,
+                   show.stats=NULL )# ,extraPlotCmds = expression(
+                   #  legend(locator(1), legend = slice%v%'testatus')))
+plot.par <- list(mar = c(0, 0, 0, 0))
+
+compute.animation(ntwk,animation.mode = 'MDSJ', chain.direction = 'reverse', verbose=FALSE)
+
+# TODO: floating legend
+render.d3movie(
+  ntwk,
+  vertex.tooltip = function(slice){paste('name:',slice%v%'vertex.names','<br>',
+                                         'status:', slice%v%'testatus', '<br>',
+                                         'immunity:', round(slice%v%'teimmunity', 3), '<br>',
+                                         'age:', round(slice%v%'teage', 3), '<br>',
+                                         'sex:', slice%v%'Sex')},
+  d3.options=list(animationDuration=2000,enterExitAnimationFactor=0.5),
+  render.par = render.par, plot.par = plot.par,
+  vertex.cex = "ndtvcex", vertex.col = "ndtvcol", vertex.border = "lightgrey",
+  label.cex=0.8,label.col="black", verbose = FALSE,
+  main = "Simulated Spread of SEIR with Tracked Immunity on a Network",
+  displaylabels = TRUE)
 

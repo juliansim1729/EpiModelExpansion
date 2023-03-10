@@ -1,0 +1,38 @@
+---
+title: "Thesis Writeup"
+author: "Julian Sim"
+output: pdf_document
+---
+
+# Chapter 1: Introduction
+
+The increasing rate of epidemics has posed a challenge for various schools, especially for districts which do not have the necessary resources to transition to online education. Although the educational benefits of different bell schedules have been studied, the purpose of this study was to determine whether alternative schedules have the potential to reduce the rate at which epidemics spread throughout schools. In order to conduct this study, we expanded traditional compartmental models to utilize network structures with an extension of the EpiModel R package. Utilizing an anonymized network dataset of secondary school friendships alongside the previous tools, we were able to determine that there is no measurable difference between the standard 8 period schedule and A/B block schedules.  
+
+# Chapter 2: Literature Review
+
+
+## Compartmental Models
+
+
+## Networks
+
+
+# Chapter 3: Datasets (faux.mesa.high)
+
+The primary dataset utilized within this study is Goodreau's Faux Mesa High School, often referred to as faux.mesa.high. This dataset was created by fitting data from the first wave of the Add Health Study, a national survey of adolescent health. After the student information was anonymized via random permutation of student attributes, an ERGM model was fit to the data, which was then applied to a network with vertices corresponding to each anonymized student. 
+
+# Chapter 4: Methodology (with example)
+
+## EpiModel
+
+## Schedule Generation
+
+## ERGM
+
+# Chapter 5: Modeling
+
+# Chapter 6: Shiny (with example)
+
+# Chapter 7: Conclusions & Future Work
+
+
