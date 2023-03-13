@@ -11,7 +11,6 @@ data(faux.mesa.high)
 ### 1.1 Time
 
 time_passing <- function(dat, at) {
-  
   active <- get_attr(dat, "active")
   status <- get_attr(dat, "status")
   immunity <- get_attr(dat, "immunity")
@@ -250,7 +249,7 @@ ergm_formula <- ~ edges + nodematch("pd1") + nodematch("pd2") + nodematch("pd3")
 # TODO: Init Loop
 # TODO: Adjust coefs based on some parameter -- e.g. measles vs generic
 
-for (n in 1:3) {
+for (n in 1:1) {
   fmh_sim <- simulate(nw ~ edges + nodematch("pd1") + nodematch("pd2") +
                         nodematch("pd3") + nodematch("pd4") + nodematch("pd5") +
                         nodematch("pd6") + nodematch("pd7") + nodematch("pd8") +
@@ -265,7 +264,7 @@ for (n in 1:3) {
                 coef.diss = coef.diss, coef.form = c(Inf, -Inf))
   
   nsteps <- 45
-  control <- control.net(type = NULL, nsteps = nsteps, nsims = 1, 
+  control <- control.net(type = NULL, nsteps = nsteps, nsims = 5, 
                          infection.FUN = NULL, recovery.FUN = NULL, time_passing.FUN = time_passing,
                          initialize.FUN = e_initialize.net, infect_ise.FUN = infect_ise,
                          progress_ei.FUN = progress_ei, progress_ir.FUN = progress_ir,
@@ -296,4 +295,6 @@ for (n in 1:3) {
   print(paste(n, "/10", " trials completed.", sep = ""))
   
 }
+
+plot(sim)
 

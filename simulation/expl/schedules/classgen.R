@@ -204,7 +204,3 @@ block_classgen <- function(studentGrades, avgClassSize, scheduleLength = 9,
   
   return(bdf)
 }
-
-sampGrades <- sample(rep(c(9, 10, 11, 12), rpois(4, 60)))
-newdf <- trad_classgen(sampGrades, 20)
-bdf <- block_classgen(sampGrades, 20)
