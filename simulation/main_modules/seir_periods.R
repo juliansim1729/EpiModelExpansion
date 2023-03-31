@@ -350,7 +350,7 @@ ergm_mod <- ergm(nw ~ edges + nodematch("pd1") + nodematch("pd2") + nodematch("p
                    nodematch("pd4") + nodematch("pd5") + nodematch("pd6") + 
                    nodematch("pd7") + nodematch("pd8"))
 
-sim_nws <- simulate(ergm_mod, nsim = 4)
+sim_nws <- simulate(ergm_mod, nsim = 1)
 summary(sim_nws) # not sure how to pull values from here directly
 
 target.stats <- c(196, 41, 49, 57, 53, 53, 34, 47, 56)
@@ -364,7 +364,7 @@ est <- netest(nw, formation = ergm_formula, target.stats = target.stats,
               coef.diss = coef.diss)
 
 ### 2.6 Network Control
-nsteps <- 50
+nsteps <- 25
 control <- control.net(type = NULL, nsteps = nsteps, nsims = 1, 
                        infection.FUN = NULL, recovery.FUN = NULL, time_passing.FUN = time_passing,
                        initialize.FUN = e_initialize.net, infect_ise.FUN = infect_ise,

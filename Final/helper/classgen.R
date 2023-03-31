@@ -89,6 +89,13 @@ trad_classgen <- function(studentGrades, avgClassSize, scheduleLength = 9,
       }
     }
   }
+  lunchTimes <- which(df == 'lunch', arr.ind = TRUE)
+  lunchTimes <- lunchTimes[order(lunchTimes[,1], decreasing = FALSE), ]
+  
+  df['lunch'] <- lunchTimes[,2] - studAttrLength
+  df['lunch'] <- lunchTimes[,2] - studAttrLength
+  
+  
   return(df)
 }
 # newdf <- trad_classgen(sampGrades, 20)
@@ -191,6 +198,7 @@ block_classgen <- function(studentGrades, avgClassSize, scheduleLength = 9,
   lunchTimes <- lunchTimes[order(lunchTimes[,1], decreasing = FALSE), ]
   
   block_df['lunch'] <- lunchTimes[,2] - studAttrLength
+  block_df['lunch'] <- lunchTimes[,2] - studAttrLength
   
   # first lunch takes pd6 (2nd) classes, second lunch takes pd7 (3rd) classes,
   # third lunch takes pd5 (1st) classes
@@ -201,6 +209,8 @@ block_classgen <- function(studentGrades, avgClassSize, scheduleLength = 9,
   
   bdf <- block_df[,c('grade', 'pd1', 'pd3', 'pd5', 'pd8', 'lunch')]
   colnames(bdf) <- c('grade', 'block1', 'block2', 'block3', 'block4', 'lunch')
+  
+  
   
   return(bdf)
 }

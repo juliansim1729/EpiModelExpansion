@@ -9,7 +9,7 @@ library("ndtv")
 data(faux.mesa.high)
 
 # Params
-p_numIter = 20
+p_numIter = 1
 
 # Modules ----
 

@@ -9,7 +9,7 @@ library("ndtv")
 data(faux.mesa.high)
 
 # Params
-p_numIter = 100
+p_numIter = 10
 
 # Modules ----
 
@@ -196,6 +196,8 @@ for (period in 1:9) {
   nw <- network::set.vertex.attribute(nw, fmh_pdV, fmh_schedule[, period + 1])
 }
 
+nw <- network::set.vertex.attribute(nw, "lunch", fmh_schedule[, 11])
+
 nocontact_mat <- matrix_maker(faux.mesa.high, fmh_schedule)
 
 init <- init.net(i.num = 10)
@@ -204,19 +206,20 @@ coef.diss <- dissolution_coefs(~offset(edges), 1)
 
 ergm_formula <- ~ edges + nodematch("pd1") + nodematch("pd2") + nodematch("pd3") +
   nodematch("pd4") + nodematch("pd5") + nodematch("pd6") + nodematch("pd7") +
-  nodematch("pd8") + nodematch("pd9") + offset(edgecov(as.matrix(faux.mesa.high))) +
+  nodematch("pd8") + nodematch("pd9") + nodematch("lunch") + 
+  offset(edgecov(as.matrix(faux.mesa.high))) +
   offset(edgecov(nocontact_mat))
 
 for (n in 1:p_numIter) {
   fmh_sim <- simulate(nw ~ edges + nodematch("pd1") + nodematch("pd2") +
                         nodematch("pd3") + nodematch("pd4") + nodematch("pd5") +
                         nodematch("pd6") + nodematch("pd7") + nodematch("pd8") +
-                        nodematch("pd9") + edgecov(as.matrix(faux.mesa.high)) +
+                        nodematch("pd9") + nodematch("lunch") + edgecov(as.matrix(faux.mesa.high)) +
                         edgecov(nocontact_mat),
-                      coef = c(0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, Inf, -Inf),
+                      coef = c(0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, Inf, -Inf),
                       control = control.simulate(MCMC.burnin = 1000000, MCMC.interval = 100))
   
-  target.stats <- attr(fmh_sim, "stats")[1:10]
+  target.stats <- attr(fmh_sim, "stats")[1:11]
   
   est <- netest(nw, formation = ergm_formula, target.stats = target.stats, 
                 coef.diss = coef.diss, coef.form = c(Inf, -Inf))
