@@ -12,9 +12,7 @@ trad_classgen <- function(studentGrades, avgClassSize, scheduleLength = 9,
   
   # set up lunch schedule
   nStudents <- length(studentGrades)
-  nLunches <- length(lunchPeriods)
-  
-  lunches <- sample(c(rep(lunchPeriods, nStudents/nLunches), 
+  nLunches <- length(lunchPeriods)lunches <- sample(c(rep(lunchPeriods, nStudents/nLunches), 
                       sample(lunchPeriods, nStudents %% nLunches)))
   
   for (i in 1:length(lunches)) {
